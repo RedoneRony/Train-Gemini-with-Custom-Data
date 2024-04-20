@@ -3,6 +3,7 @@ Create a .env file then add the following environment variables
 ```
 MONGO_URI=mongodb://localhost:27017
 PORT=8080
+DB_NAME=<your_DB_NAME>
 ```
 
 Then Run following command to install the packages
