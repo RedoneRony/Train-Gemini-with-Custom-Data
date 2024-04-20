@@ -2,7 +2,10 @@ import express from "express";
 
 import {
   viewNumberOfWords,
-  viewNumberOfCharacters
+  viewNumberOfCharacters,
+  viewNumberOfSentences,
+  viewNumberOfParagraphs,
+  viewLongestWordsInParagraphs
 } from "../controllers/mainController.js";
 
 
@@ -17,4 +20,15 @@ router
   .route("/get-character-counts")
   .get(viewNumberOfCharacters);
 
+router
+  .route("/get-sentence-counts")
+  .get(viewNumberOfSentences);
+
+router
+  .route("/get-paragraph-counts")
+  .get(viewNumberOfParagraphs);
+
+router
+  .route("/get-longest-word-in-paragraph-counts")
+  .get(viewLongestWordsInParagraphs);
 export default router;
