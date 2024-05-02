@@ -1,141 +1,74 @@
 import asyncHandler from "express-async-handler";
-import fs from "fs";
+import { promises as fs } from 'fs'; // Import fs module with promises support
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+// Access your API key as an environment variable (see "Set up your API key" above)
+const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+const txtPath = `./documents/documents.text`;
+
+
+// Async function to process document and generate summary
+async function getDocumentSummary(data) {
+  // For text-only input, use the gemini-pro model
+  const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+  // Construct final prompt
+  const prompt = `Generate summary based on this data ${data}`;
+
+  const result = await model.generateContent(prompt);
+  const response = await result.response;
+  const text = response.text();
+  return text;
+}
 
 // View Number of Words
-const viewNumberOfWords = asyncHandler(async (req, res) => {
+const trainAndResponseDataByGemini = asyncHandler(async (req, res) => {
 
-  fs.readFile('./controllers/sample.txt', 'utf8', (err, data) => {
-    if (err) {
-      console.error(err);
-      return;
+  const query = req.body.query;
+
+  // For text-only input, use the gemini-pro model
+  const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+  try {
+    let docSummary = ''; // Initialize document summary
+
+    const data = await fs.readFile(txtPath, 'utf8');
+
+    // Process the document if provided
+    if (data) {
+      // docSummary = await getDocumentSummary(data); // Get document summary
+      docSummary = data;
     }
-    try {
-      // remove punction from sentences
-      const textWithoutPunctuation = data.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
 
-      // Split the string into words based on spaces
-      const wordsArray = textWithoutPunctuation.split(" ");
+    // Construct final prompt
+    let prompt;
+    let text;
+    let result;
+    let response;
+    const notFoundString = "does not";
+    prompt = query + (docSummary ? ` Based on the document: ${docSummary}` : '');
+    result = await model.generateContent(prompt);
+    response = await result.response;
+    text = response.text();
 
-      // Count the number of words
-      const numberOfWords = wordsArray.length;
-
-      return res.status(200).json({ result: `Total number of words: ${numberOfWords}` });
-    } catch (err) {
-      return res.status(404).json({ message: "View number of words Not Found." });
+    if (text.includes(notFoundString)) {
+      console.log("text");
+      prompt = query;
+      result = await model.generateContent(prompt);
+      response = await result.response;
+      text = response.text();
     }
-  });
 
-});
+    res.status(500).json({ result: text });
+  } catch (error) {
+    console.error('Error calling OpenAI API:', error);
+    res.status(500).send('Failed to summarize the text');
+  }
 
-
-// view number of characters
-const viewNumberOfCharacters = asyncHandler(async (req, res) => {
-  fs.readFile('./controllers/sample.txt', 'utf8', (err, data) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ message: "Error reading file" });
-    }
-    try {
-      // Remove punctuation marks using regular expressions
-      const textWithoutPunctuation = data.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
-
-      // Count the number of characters
-      const numberOfCharacters = textWithoutPunctuation.length;
-
-      return res.status(200).json({ result: `Total number of characters: ${numberOfCharacters}` });
-    } catch (err) {
-      console.error("Error counting characters:", err);
-      return res.status(500).json({ message: "Error counting characters" });
-    }
-  });
-});
-
-
-// count number of sentences
-
-const viewNumberOfSentences = asyncHandler(async (req, res) => {
-  fs.readFile('./controllers/sample.txt', 'utf8', (err, data) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ message: "Error reading file" });
-    }
-    try {
-      // Count the number of sentences
-      const numberOfSentences = (data.match(/[.!?]+/g) || []).length;
-
-      return res.status(200).json({ result: `Total number of sentences: ${numberOfSentences}` });
-    } catch (err) {
-      console.error("Error counting sentences:", err);
-      return res.status(500).json({ message: "Error counting sentences" });
-    }
-  });
-});
-
-// count number of paragraphs
-
-const viewNumberOfParagraphs = asyncHandler(async (req, res) => {
-  fs.readFile('./controllers/sample.txt', 'utf8', (err, data) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ message: "Error reading file" });
-    }
-    try {
-      // Count the number of paragraphs
-      const numberOfParagraphs = (data.split(/\n\s*\n/g) || []).length;
-
-      return res.status(200).json({ result: `Total number of paragraphs: ${numberOfParagraphs}` });
-    } catch (err) {
-      console.error("Error counting paragraphs:", err);
-      return res.status(500).json({ message: "Error counting paragraphs" });
-    }
-  });
-});
-
-// return longest words in the paragraphs
-const viewLongestWordsInParagraphs = asyncHandler(async (req, res) => {
-  fs.readFile('./controllers/sample.txt', 'utf8', (err, data) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ message: "Error reading file" });
-    }
-    try {
-      // Split the text into paragraphs
-      const paragraphs = data.split(/\n\s*\n/g);
-
-      // Initialize an array to store the longest words in each paragraph
-      const longestWordsInParagraphs = [];
-
-      // Iterate through each paragraph
-      for (const paragraph of paragraphs) {
-        // Split the paragraph into words
-        const words = paragraph.split(/\s+/);
-
-        // Find the longest word in the paragraph
-        let longestWord = "";
-        for (const word of words) {
-          if (word.length > longestWord.length) {
-            longestWord = word;
-          }
-        }
-
-        // Add the longest word to the array
-        longestWordsInParagraphs.push(longestWord);
-      }
-
-      return res.status(200).json({ result: longestWordsInParagraphs });
-    } catch (err) {
-      console.error("Error finding longest words in paragraphs:", err);
-      return res.status(500).json({ message: "Error finding longest words in paragraphs" });
-    }
-  });
 });
 
 
 
 export {
-  viewNumberOfWords,
-  viewNumberOfCharacters,
-  viewNumberOfSentences,
-  viewNumberOfParagraphs,
-  viewLongestWordsInParagraphs
+  trainAndResponseDataByGemini,
 };

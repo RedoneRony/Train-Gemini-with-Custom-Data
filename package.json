@@ -1,5 +1,5 @@
 {
-	"name": "contact-microservice",
+	"name": "Train-Gemini-On-CustomData",
 	"version": "1.0.0",
 	"description": "Calysta Pro CRM Contact MS",
 	"main": "index.js",
@@ -13,7 +13,7 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
-		"aws-sdk": "^2.1563.0",
+		"@google/generative-ai": "^0.9.0",
 		"axios": "^1.6.0",
 		"body-parser": "^1.20.2",
 		"cors": "^2.8.5",
@@ -23,7 +23,7 @@
 		"express-async-handler": "^1.2.0",
 		"fs": "^0.0.1-security",
 		"jsonwebtoken": "^9.0.2",
-		"moment-timezone": "^0.5.43",
+		"langchain": "^0.1.36",
 		"mongodb": "^6.0.0",
 		"mongoose": "^7.5.0",
 		"path": "^0.12.7",
